@@ -1,4 +1,5 @@
 FROM python:3.12-alpine
+LABEL org.opencontainers.image.source="https://github.com/craigsblackie/craft-hub"
 RUN pip install --no-cache-dir fastapi "uvicorn[standard]" httpx
 WORKDIR /srv
 COPY app /srv/app

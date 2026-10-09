@@ -1,14 +1,14 @@
 <?xml version="1.0"?>
 <Container version="2">
   <Name>crafthub</Name>
-  <Repository>crafthub:latest</Repository>
-  <Registry/>
+  <Repository>ghcr.io/craigsblackie/craft-hub:latest</Repository>
+  <Registry>https://github.com/craigsblackie/craft-hub/pkgs/container/craft-hub</Registry>
   <Network>proxynet</Network>
   <MyIP/>
   <Shell>sh</Shell>
   <Privileged>false</Privileged>
-  <Support/>
-  <Project/>
+  <Support>https://github.com/craigsblackie/craft-hub/issues</Support>
+  <Project>https://github.com/craigsblackie/craft-hub</Project>
   <Overview>CraftHub: a modern web console to install, update, roll back, delete and host the storytold *craft clean-room WebAssembly apps (PhotoCraft, WordCraft, ...). Served behind SWAG.</Overview>
   <Category>Tools:</Category>
   <WebUI>http://[IP]:[PORT:8080]/</WebUI>

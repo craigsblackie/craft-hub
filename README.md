@@ -26,7 +26,7 @@ Path `/data` holds installed apps and state; `/packages` keeps the downloaded re
 ## Deploy
 
 ```
-docker build -t crafthub:latest .
+docker pull ghcr.io/craigsblackie/craft-hub:latest   # or: docker build -t crafthub:latest .
 cp unraid/my-crafthub.xml /boot/config/plugins/dockerMan/templates-user/
 cp swag/crafthub.subdomain.conf <swag>/nginx/proxy-confs/
 ```
