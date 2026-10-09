@@ -31,4 +31,4 @@ cp unraid/my-crafthub.xml /boot/config/plugins/dockerMan/templates-user/
 cp swag/crafthub.subdomain.conf <swag>/nginx/proxy-confs/
 ```
 
-Put the container on `proxynet`, create a DNS record for `craft.<domain>`, and create `/config/nginx/.htpasswd` in SWAG (`htpasswd -c`). The dashboard and API use basic auth; `/app/` is open.
+Put the container on `proxynet`, create a DNS record for `craft.<domain>`. No auth is configured by default; add `auth_basic` in the SWAG conf if you want it.
