@@ -31,4 +31,3 @@ jobs:
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.description=Web console to install, update and host the storytold craft WASM apps
-            org.opencontainers.image.licenses=MIT
