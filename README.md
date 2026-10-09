@@ -21,7 +21,7 @@ A small web console that installs, updates, rolls back, deletes and hosts the `*
 | `EXCLUDE_REPOS` | `artcraft` | Comma-separated repos to hide |
 | `EXTRA_REPOS` | | Comma-separated repos to include regardless of pattern |
 
-Path `/data` holds installed apps and state. Template: `unraid/my-crafthub.xml`.
+Path `/data` holds installed apps and state; `/packages` keeps the downloaded release zips (`KEEP_PACKAGES` per app, default 3) so reinstalls and rollbacks work offline. Template: `unraid/my-crafthub.xml`.
 
 ## Deploy
 

@@ -24,6 +24,8 @@ EXTRA = [x.strip() for x in os.getenv("EXTRA_REPOS", "").split(",") if x.strip()
 REPO_RE = re.compile(os.getenv("REPO_PATTERN", r"^[a-z]+craft$"))
 DATA = Path(os.getenv("DATA_DIR", "/data"))
 APPS = DATA / "apps"
+PACKAGES = Path(os.getenv("PACKAGES_DIR", "/packages"))
+KEEP = int(os.getenv("KEEP_PACKAGES", "3"))
 STATE_FILE = DATA / "state.json"
 UI = Path(__file__).parent / "ui"
 UA = {"User-Agent": "crafthub/1.0", "Accept": "application/vnd.github+json"}
@@ -158,19 +160,27 @@ async def do_install(name, version=None, action="install"):
                 raise RuntimeError(f"version {version} not found")
             tmp = Path(tempfile.mkdtemp(prefix=f"{name}-", dir=DATA))
             try:
-                zpath = tmp / "pkg.zip"
+                pkgdir = PACKAGES / name
+                zpath = pkgdir / rel["asset"]
                 h = hashlib.sha256()
-                job["msg"] = f"Downloading {rel['tag']}"
-                async with client.stream("GET", rel["asset_url"]) as r:
-                    r.raise_for_status()
-                    total = int(r.headers.get("content-length") or rel["size"] or 0)
-                    got = 0
-                    with open(zpath, "wb") as f:
-                        async for chunk in r.aiter_bytes(262144):
-                            f.write(chunk)
-                            h.update(chunk)
-                            got += len(chunk)
-                            job["pct"] = int(got / total * 80) if total else 40
+                if zpath.exists():
+                    job["msg"], job["pct"] = f"Using stored package {rel['tag']}", 40
+                    h.update(zpath.read_bytes())
+                else:
+                    pkgdir.mkdir(parents=True, exist_ok=True)
+                    part = zpath.with_suffix(".part")
+                    job["msg"] = f"Downloading {rel['tag']}"
+                    async with client.stream("GET", rel["asset_url"]) as r:
+                        r.raise_for_status()
+                        total = int(r.headers.get("content-length") or rel["size"] or 0)
+                        got = 0
+                        with open(part, "wb") as f:
+                            async for chunk in r.aiter_bytes(262144):
+                                f.write(chunk)
+                                h.update(chunk)
+                                got += len(chunk)
+                                job["pct"] = int(got / total * 80) if total else 40
+                    part.replace(zpath)
                 verified = False
                 if rel["sums_url"]:
                     job["msg"] = "Verifying checksum"
@@ -179,7 +189,8 @@ async def do_install(name, version=None, action="install"):
                         parts = line.split()
                         if len(parts) >= 2 and parts[-1].lstrip("*") == rel["asset"]:
                             if parts[0].lower() != h.hexdigest():
-                                raise RuntimeError("SHA256 mismatch, download rejected")
+                                zpath.unlink(missing_ok=True)
+                                raise RuntimeError("SHA256 mismatch, package discarded")
                             verified = True
                 job["msg"], job["pct"] = "Extracting", 85
                 stage = tmp / "stage"
@@ -204,7 +215,9 @@ async def do_install(name, version=None, action="install"):
                 rec = {"version": rel["tag"], "installed_at": int(time.time()), "size": dir_size(cur), "verified": verified,
                        "auto_update": (old or {}).get("auto_update", False), "previous": (old or {}).get("version") if old else None}
                 state["installed"][name] = rec
-                log(f"{action.capitalize()}ed {name} {rel['tag']}" + (" (checksum verified)" if verified else ""))
+                for old_pkg in sorted(pkgdir.glob("*.zip"), key=lambda x: x.stat().st_mtime, reverse=True)[KEEP:]:
+                    old_pkg.unlink(missing_ok=True)
+                log(f"{dict(install="Installed", update="Updated")[action]} {name} {rel['tag']}" + (" (checksum verified)" if verified else ""))
             finally:
                 shutil.rmtree(tmp, ignore_errors=True)
             job.update(state="done", pct=100, msg="Done")
