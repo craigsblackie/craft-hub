@@ -1,4 +1,4 @@
-FROM python:3.12-alpine
+FROM python:3.14-alpine
 LABEL org.opencontainers.image.source="https://github.com/craigsblackie/craft-hub"
 WORKDIR /srv
 COPY requirements.txt .
