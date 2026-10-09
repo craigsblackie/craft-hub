@@ -3,7 +3,8 @@ name: Build image
 on:
   push:
     branches: [main]
-    paths-ignore: ["README.md", "swag/**", "unraid/**"]
+    paths-ignore: ["README.md", "swag/**", "unraid/**", "icon.*"]
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -11,7 +12,18 @@ permissions:
   packages: write
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-dev.txt
+      - run: python -m pytest -q
+
   build:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +36,7 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           context: .
-          push: true
+          push: ${{ github.event_name != 'pull_request' }}
           tags: |
             ghcr.io/${{ github.repository }}:latest
             ghcr.io/${{ github.repository }}:${{ github.sha }}

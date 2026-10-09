@@ -15,7 +15,7 @@
   <ExtraParams>--user 99:100</ExtraParams>
   <PostArgs/>
   <CPUset/>
-  <Icon>https://raw.githubusercontent.com/selfhst/icons/main/png/docker.png</Icon>
+  <Icon>https://raw.githubusercontent.com/craigsblackie/craft-hub/main/icon.png</Icon>
   <Requires/>
   <Config Name="WebUI Port (LAN)" Target="8080" Default="8098" Mode="tcp" Description="Direct LAN access; SWAG uses proxynet and port 8080" Type="Port" Display="always" Required="true" Mask="false">8098</Config>
   <Config Name="Data" Target="/data" Default="/mnt/user/appdata/crafthub/data" Mode="rw" Description="Installed apps and state" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/crafthub/data</Config>
@@ -25,6 +25,9 @@
   <Config Name="GITHUB_TOKEN" Target="GITHUB_TOKEN" Default="" Mode="" Description="Optional token; raises GitHub API limit and allows private repos" Type="Variable" Display="always" Required="false" Mask="true"/>
   <Config Name="CHECK_INTERVAL_HOURS" Target="CHECK_INTERVAL_HOURS" Default="6" Mode="" Description="How often to check for new versions" Type="Variable" Display="always" Required="false" Mask="false">6</Config>
   <Config Name="AUTO_UPDATE_ALL" Target="AUTO_UPDATE_ALL" Default="false" Mode="" Description="Automatically upgrade every installed app (true/false)" Type="Variable" Display="always" Required="false" Mask="false">false</Config>
+  <Config Name="MIN_RELEASE_AGE_HOURS" Target="MIN_RELEASE_AGE_HOURS" Default="24" Mode="" Description="Warn before installing releases younger than this, and hold them back from auto-update (0 disables)" Type="Variable" Display="always" Required="false" Mask="false">24</Config>
+  <Config Name="NOTIFY_URL" Target="NOTIFY_URL" Default="" Mode="" Description="Optional ntfy-style URL (text POST with Title header) for update/failure notifications" Type="Variable" Display="always" Required="false" Mask="true"/>
+  <Config Name="MAX_UNPACKED_MB" Target="MAX_UNPACKED_MB" Default="500" Mode="" Description="Reject packages that unpack larger than this" Type="Variable" Display="advanced" Required="false" Mask="false">500</Config>
   <Config Name="REPO_PATTERN" Target="REPO_PATTERN" Default="^[a-z]+craft$" Mode="" Description="Regex of repo names to list" Type="Variable" Display="advanced" Required="false" Mask="false">^[a-z]+craft$</Config>
   <Config Name="EXCLUDE_REPOS" Target="EXCLUDE_REPOS" Default="artcraft" Mode="" Description="Comma-separated repos to hide" Type="Variable" Display="advanced" Required="false" Mask="false">artcraft</Config>
   <Config Name="EXTRA_REPOS" Target="EXTRA_REPOS" Default="" Mode="" Description="Comma-separated extra repos to include regardless of pattern" Type="Variable" Display="advanced" Required="false" Mask="false"/>
