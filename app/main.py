@@ -13,10 +13,11 @@ import zipfile
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlparse
 
 import httpx
 from fastapi import Body, FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 
 OWNER = os.getenv("GH_OWNER", "storytold")
 TOKEN = os.getenv("GITHUB_TOKEN", "").strip()
@@ -35,8 +36,10 @@ NOTIFY_URL = os.getenv("NOTIFY_URL", "").strip()
 STATE_FILE = DATA / "state.json"
 UI = Path(__file__).parent / "ui"
 UA = {"User-Agent": "crafthub/1.0", "Accept": "application/vnd.github+json"}
-if TOKEN:
-    UA["Authorization"] = f"Bearer {TOKEN}"
+ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "").split(",") if h.strip()]
+CSP = ("default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; "
+       "frame-ancestors 'self'; base-uri 'none'; form-action 'none'")
+SAFE_ASSET = re.compile(r"^[A-Za-z0-9._-]+$")
 
 REPLACES = {
     "photocraft": "Adobe Photoshop", "lightcraft": "Adobe Lightroom", "vectorcraft": "Adobe Illustrator",
@@ -90,10 +93,17 @@ async def notify(title, msg):
 # ---------- GitHub catalog ----------
 async def gh(url, etag=None):
     h = {"If-None-Match": etag} if etag else {}
+    if TOKEN:  # the token is only ever sent to the GitHub API, never to downloads or notification URLs
+        h["Authorization"] = f"Bearer {TOKEN}"
     r = await client.get(url, headers=h)
     if r.status_code == 403 and "rate limit" in r.text.lower():
         raise RuntimeError("GitHub API rate limit hit (set GITHUB_TOKEN to raise it)")
     return r
+
+
+def trusted_url(u):
+    p = urlparse(u or "")
+    return p.scheme == "https" and bool(p.hostname) and (p.hostname == "github.com" or p.hostname.endswith(".githubusercontent.com"))
 
 
 def parse_releases(rels):
@@ -102,12 +112,12 @@ def parse_releases(rels):
         if rel.get("draft") or rel.get("prerelease"):
             continue
         web = next((a for a in rel["assets"] if re.search(r"-web-.*\.zip$", a["name"])), None)
-        if not web:
+        if not web or not SAFE_ASSET.match(web["name"]) or not trusted_url(web["browser_download_url"]):
             continue
         sums = next((a for a in rel["assets"] if a["name"].upper().startswith("SHA256SUMS")), None)
         out.append({"tag": rel["tag_name"], "published": rel["published_at"], "url": rel["html_url"], "body": (rel.get("body") or "")[:1500],
                     "asset": web["name"], "asset_url": web["browser_download_url"], "size": web["size"],
-                    "sums_url": sums["browser_download_url"] if sums else None})
+                    "sums_url": sums["browser_download_url"] if sums and trusted_url(sums["browser_download_url"]) else None})
     return sorted(out, key=lambda r: vkey(r["tag"]), reverse=True)
 
 
@@ -254,6 +264,8 @@ async def do_install(name, version=None, action="install"):
                                 f.write(chunk)
                                 h.update(chunk)
                                 got += len(chunk)
+                                if got > MAX_UNPACKED:
+                                    raise RuntimeError("download exceeds the size limit")
                                 job["pct"] = int(got / total * 80) if total else 40
                     part.replace(zpath)
                     digest = h.hexdigest()
@@ -379,6 +391,32 @@ async def lifespan(app):
 
 
 app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+if ALLOWED_HOSTS:  # defends against DNS-rebinding; empty = accept any Host
+    from starlette.middleware.trustedhost import TrustedHostMiddleware
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=ALLOWED_HOSTS + ["127.0.0.1", "localhost"])
+
+
+@app.middleware("http")
+async def guard(request: Request, call_next):
+    path = request.url.path
+    if path.startswith("/api/") and request.method not in ("GET", "HEAD"):
+        # CSRF: a cross-site page can send a "simple" POST/DELETE without any preflight, so require a
+        # custom header (forces a CORS preflight, which we never grant) plus a same-origin check.
+        if request.headers.get("x-requested-with") != "crafthub":
+            return JSONResponse({"detail": "missing X-Requested-With header"}, status_code=403)
+        origin = request.headers.get("origin")
+        if origin and urlparse(origin).netloc != request.headers.get("host"):
+            return JSONResponse({"detail": "cross-origin request blocked"}, status_code=403)
+        if request.headers.get("sec-fetch-site", "same-origin") not in ("same-origin", "none"):
+            return JSONResponse({"detail": "cross-site request blocked"}, status_code=403)
+    resp = await call_next(request)
+    if not path.startswith("/app/"):  # hosted apps keep their own (permissive, WASM-friendly) policy
+        resp.headers["X-Content-Type-Options"] = "nosniff"
+        resp.headers["X-Frame-Options"] = "SAMEORIGIN"
+        resp.headers["Referrer-Policy"] = "no-referrer"
+        if path == "/" or path.startswith("/ui/"):
+            resp.headers["Content-Security-Policy"] = CSP
+    return resp
 
 
 def view(name):
@@ -469,7 +507,13 @@ def set_settings(body: dict = Body(...)):
     if "auto_update_all" in body:
         s["auto_update_all"] = bool(body["auto_update_all"])
     if "check_hours" in body:
-        s["check_hours"] = max(0.25, float(body["check_hours"]))
+        try:
+            v = float(body["check_hours"])
+        except (TypeError, ValueError):
+            raise HTTPException(422, "check_hours must be a number")
+        if not 0.25 <= v <= 720:
+            raise HTTPException(422, "check_hours must be between 0.25 and 720")
+        s["check_hours"] = v
     save()
     return s
 
@@ -551,3 +595,11 @@ def serve_app(name: str, request: Request, path: str = ""):
 @app.api_route("/", methods=["GET", "HEAD"])
 def index():
     return HTMLResponse((UI / "index.html").read_text(), headers={"Cache-Control": "no-cache"})
+
+
+@app.get("/ui/{asset}")
+def ui_asset(asset: str):
+    f = UI / asset
+    if asset not in ("app.js",) or not f.is_file():
+        raise HTTPException(404)
+    return FileResponse(f, media_type="text/javascript", headers={"Cache-Control": "no-cache"})

@@ -4,7 +4,7 @@ WORKDIR /srv
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY app /srv/app
-ENV DATA_DIR=/data PACKAGES_DIR=/packages PYTHONUNBUFFERED=1
+ENV DATA_DIR=/data PACKAGES_DIR=/packages PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
 VOLUME ["/data", "/packages"]
 EXPOSE 8080
 USER 99:100

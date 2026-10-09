@@ -16,9 +16,10 @@ A small web console that installs, updates, rolls back, deletes and hosts the `*
 | Variable | Default | Purpose |
 |---|---|---|
 | `GH_OWNER` | `storytold` | GitHub user/org |
-| `GITHUB_TOKEN` | | Optional; raises API limits, allows private repos |
+| `GITHUB_TOKEN` | | Optional; raises the API rate limit. Only ever sent to api.github.com |
 | `CHECK_INTERVAL_HOURS` | `6` | Version check interval |
 | `AUTO_UPDATE_ALL` | `false` | Auto-upgrade all installed apps |
+| `ALLOWED_HOSTS` | | Comma-separated Host names the UI answers to (DNS-rebinding defence). Empty = any |
 | `MIN_RELEASE_AGE_HOURS` | `24` | Warn before installing releases younger than this; auto-update waits until they are this old (0 disables) |
 | `NOTIFY_URL` | | Optional ntfy-style URL; gets a text POST (Title header) on new versions, auto-updates and failures |
 | `MAX_UNPACKED_MB` | `500` | Reject packages that unpack larger than this |
@@ -47,3 +48,13 @@ python -m pytest
 ```
 
 CI runs the tests, then publishes `ghcr.io/craigsblackie/craft-hub` on pushes to `main`.
+
+## Security notes
+
+There is no login: it is meant for a trusted LAN. Built in:
+
+- Mutating API calls need a custom header plus a same-origin check, so other websites can't drive the API from your browser (CSRF)
+- Strict Content-Security-Policy on the dashboard (no inline scripts), all dynamic content escaped
+- `ALLOWED_HOSTS` host allow-list; non-root container, all capabilities dropped, read-only root filesystem
+- Downloads only from github.com / githubusercontent.com over HTTPS, SHA-256 verified, size- and file-count-limited extraction, path traversal blocked
+- Hosted apps share this origin, so only install apps you trust

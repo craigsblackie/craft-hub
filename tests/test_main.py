@@ -81,7 +81,7 @@ def test_install_upgrade_rollback_delete(env):
     asyncio.run(main.do_install("x", "v1.1.0", "update"))
     rec = main.state["installed"]["x"]
     assert rec["version"] == "v1.1.0" and rec["previous"] == "v1.0.0"
-    c = TestClient(main.app)
+    c = TestClient(main.app, headers={'X-Requested-With': 'crafthub'})
     assert c.post("/api/apps/x/rollback").status_code == 200
     assert main.state["installed"]["x"]["version"] == "v1.0.0"
     assert c.delete("/api/apps/x").status_code == 200
@@ -117,7 +117,7 @@ def test_failed_activation_restores_current(tmp_path, monkeypatch):
 
 def test_serving_headers_gzip_head_and_traversal(env):
     asyncio.run(main.do_install("x", "v1.0.0"))
-    c = TestClient(main.app)
+    c = TestClient(main.app, headers={'X-Requested-With': 'crafthub'})
     r = c.get("/app/x/x-abcdef0123456789_bg.wasm", headers={"accept-encoding": "gzip"})
     assert r.status_code == 200
     assert r.headers["content-type"] == "application/wasm"
@@ -144,8 +144,64 @@ def test_auto_update_holds_fresh_releases(env, monkeypatch):
 
 def test_export_and_dismiss(env):
     asyncio.run(main.do_install("x", "v1.0.0"))
-    c = TestClient(main.app)
+    c = TestClient(main.app, headers={'X-Requested-With': 'crafthub'})
     assert c.get("/api/export").json()["apps"][0]["version"] == "v1.0.0"
     main.jobs["x"] = {"state": "error", "msg": "boom", "pct": 0, "action": "install"}
     c.post("/api/apps/x/dismiss")
     assert "x" not in main.jobs
+
+
+def test_csrf_protection():
+    c = TestClient(main.app)  # no custom header
+    assert c.post("/api/refresh").status_code == 403
+    assert c.delete("/api/apps/x").status_code == 403
+    ok = {"X-Requested-With": "crafthub"}
+    assert c.post("/api/apps/nope/dismiss", headers=ok).status_code == 200
+    assert c.post("/api/apps/nope/dismiss", headers={**ok, "Origin": "https://evil.example"}).status_code == 403
+    assert c.post("/api/apps/nope/dismiss", headers={**ok, "Origin": "http://testserver"}).status_code == 200
+    assert c.post("/api/apps/nope/dismiss", headers={**ok, "Sec-Fetch-Site": "cross-site"}).status_code == 403
+    assert c.get("/api/health").status_code == 200  # reads are unaffected
+
+
+def test_security_headers_and_csp():
+    c = TestClient(main.app)
+    r = c.get("/")
+    assert "script-src 'self'" in r.headers["content-security-policy"] and "unsafe-inline'; img" in r.headers["content-security-policy"]
+    assert "'unsafe-inline'" not in r.headers["content-security-policy"].split("script-src")[1].split(";")[0]
+    assert r.headers["x-frame-options"] == "SAMEORIGIN"
+    assert "<script>" not in r.text and 'onclick="' not in r.text  # nothing inline for the CSP to block
+    assert c.get("/ui/app.js").status_code == 200 and c.get("/ui/../main.py").status_code == 404
+
+
+def test_apps_do_not_get_dashboard_csp(env):
+    asyncio.run(main.do_install("x", "v1.0.0"))
+    assert "content-security-policy" not in TestClient(main.app).get("/app/x/").headers
+
+
+def test_github_token_never_in_shared_client_headers():
+    assert "Authorization" not in main.UA
+
+
+def test_release_parsing_rejects_untrusted_assets():
+    def rel(url, name="x-web-1.zip"):
+        return {"tag_name": "v1", "published_at": "2020-01-01T00:00:00Z", "html_url": "", "draft": False, "prerelease": False,
+                "assets": [{"name": name, "browser_download_url": url, "size": 1}]}
+    good = "https://github.com/o/r/releases/download/v1/x-web-1.zip"
+    assert len(main.parse_releases([rel(good)])) == 1
+    assert len(main.parse_releases([rel("https://evil.example/x-web-1.zip")])) == 0
+    assert len(main.parse_releases([rel("http://github.com/x-web-1.zip")])) == 0
+    assert len(main.parse_releases([rel(good, "../../x-web-1.zip")])) == 0
+
+
+def test_settings_validation(env):
+    c = TestClient(main.app, headers={"X-Requested-With": "crafthub"})
+    assert c.post("/api/settings", json={"check_hours": "abc"}).status_code == 422
+    assert c.post("/api/settings", json={"check_hours": 99999}).status_code == 422
+    assert c.post("/api/settings", json={"check_hours": 2}).status_code == 200
+
+
+def test_download_size_cap(env, monkeypatch):
+    monkeypatch.setattr(main, "MAX_UNPACKED", 100)
+    ok = asyncio.run(main.do_install("x", "v1.0.0"))
+    assert ok is False and "size limit" in main.jobs["x"]["msg"]
+    assert not list((main.PACKAGES / "x").glob("*.zip"))

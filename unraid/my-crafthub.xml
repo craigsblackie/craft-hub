@@ -12,7 +12,7 @@
   <Overview>CraftHub: a modern web console to install, update, roll back, delete and host the storytold *craft clean-room WebAssembly apps (PhotoCraft, WordCraft, ...). Served behind SWAG.</Overview>
   <Category>Tools:</Category>
   <WebUI>http://[IP]:[PORT:8080]/</WebUI>
-  <ExtraParams>--user 99:100</ExtraParams>
+  <ExtraParams>--user 99:100 --cap-drop=ALL --security-opt=no-new-privileges:true --read-only --tmpfs /tmp</ExtraParams>
   <PostArgs/>
   <CPUset/>
   <Icon>https://raw.githubusercontent.com/craigsblackie/craft-hub/main/icon.png</Icon>
@@ -22,9 +22,10 @@
   <Config Name="Packages" Target="/packages" Default="/mnt/user/appdata/crafthub/packages" Mode="rw" Description="Downloaded release zips (kept for reinstall/rollback)" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/crafthub/packages</Config>
   <Config Name="KEEP_PACKAGES" Target="KEEP_PACKAGES" Default="3" Mode="" Description="Zips to keep per app" Type="Variable" Display="advanced" Required="false" Mask="false">3</Config>
   <Config Name="GH_OWNER" Target="GH_OWNER" Default="storytold" Mode="" Description="GitHub user/org to pull apps from" Type="Variable" Display="always" Required="true" Mask="false">storytold</Config>
-  <Config Name="GITHUB_TOKEN" Target="GITHUB_TOKEN" Default="" Mode="" Description="Optional token; raises GitHub API limit and allows private repos" Type="Variable" Display="always" Required="false" Mask="true"/>
+  <Config Name="GITHUB_TOKEN" Target="GITHUB_TOKEN" Default="" Mode="" Description="Optional token; raises the GitHub API rate limit (only ever sent to api.github.com)" Type="Variable" Display="always" Required="false" Mask="true"/>
   <Config Name="CHECK_INTERVAL_HOURS" Target="CHECK_INTERVAL_HOURS" Default="6" Mode="" Description="How often to check for new versions" Type="Variable" Display="always" Required="false" Mask="false">6</Config>
   <Config Name="AUTO_UPDATE_ALL" Target="AUTO_UPDATE_ALL" Default="false" Mode="" Description="Automatically upgrade every installed app (true/false)" Type="Variable" Display="always" Required="false" Mask="false">false</Config>
+  <Config Name="ALLOWED_HOSTS" Target="ALLOWED_HOSTS" Default="" Mode="" Description="Comma-separated Host names the UI answers to (blocks DNS-rebinding). Empty = any. e.g. craft.example.com,192.168.1.10" Type="Variable" Display="always" Required="false" Mask="false">craft.craigsblackie.com,10.13.37.254</Config>
   <Config Name="MIN_RELEASE_AGE_HOURS" Target="MIN_RELEASE_AGE_HOURS" Default="24" Mode="" Description="Warn before installing releases younger than this, and hold them back from auto-update (0 disables)" Type="Variable" Display="always" Required="false" Mask="false">24</Config>
   <Config Name="NOTIFY_URL" Target="NOTIFY_URL" Default="" Mode="" Description="Optional ntfy-style URL (text POST with Title header) for update/failure notifications" Type="Variable" Display="always" Required="false" Mask="true"/>
   <Config Name="MAX_UNPACKED_MB" Target="MAX_UNPACKED_MB" Default="500" Mode="" Description="Reject packages that unpack larger than this" Type="Variable" Display="advanced" Required="false" Mask="false">500</Config>
