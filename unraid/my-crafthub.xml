@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>crafthub</Name>
+  <Repository>crafthub:latest</Repository>
+  <Registry/>
+  <Network>proxynet</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support/>
+  <Project/>
+  <Overview>CraftHub: a modern web console to install, update, roll back, delete and host the storytold *craft clean-room WebAssembly apps (PhotoCraft, WordCraft, ...). Served behind SWAG.</Overview>
+  <Category>Tools:</Category>
+  <WebUI>http://[IP]:[PORT:8080]/</WebUI>
+  <ExtraParams>--user 99:100</ExtraParams>
+  <PostArgs/>
+  <CPUset/>
+  <Icon>https://raw.githubusercontent.com/selfhst/icons/main/png/docker.png</Icon>
+  <Requires/>
+  <Config Name="WebUI Port (LAN)" Target="8080" Default="8098" Mode="tcp" Description="Direct LAN access; SWAG uses proxynet and port 8080" Type="Port" Display="always" Required="true" Mask="false">8098</Config>
+  <Config Name="Data" Target="/data" Default="/mnt/user/appdata/crafthub/data" Mode="rw" Description="Installed apps and state" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/crafthub/data</Config>
+  <Config Name="GH_OWNER" Target="GH_OWNER" Default="storytold" Mode="" Description="GitHub user/org to pull apps from" Type="Variable" Display="always" Required="true" Mask="false">storytold</Config>
+  <Config Name="GITHUB_TOKEN" Target="GITHUB_TOKEN" Default="" Mode="" Description="Optional token; raises GitHub API limit and allows private repos" Type="Variable" Display="always" Required="false" Mask="true"/>
+  <Config Name="CHECK_INTERVAL_HOURS" Target="CHECK_INTERVAL_HOURS" Default="6" Mode="" Description="How often to check for new versions" Type="Variable" Display="always" Required="false" Mask="false">6</Config>
+  <Config Name="AUTO_UPDATE_ALL" Target="AUTO_UPDATE_ALL" Default="false" Mode="" Description="Automatically upgrade every installed app (true/false)" Type="Variable" Display="always" Required="false" Mask="false">false</Config>
+  <Config Name="REPO_PATTERN" Target="REPO_PATTERN" Default="^[a-z]+craft$" Mode="" Description="Regex of repo names to list" Type="Variable" Display="advanced" Required="false" Mask="false">^[a-z]+craft$</Config>
+  <Config Name="EXCLUDE_REPOS" Target="EXCLUDE_REPOS" Default="artcraft" Mode="" Description="Comma-separated repos to hide" Type="Variable" Display="advanced" Required="false" Mask="false">artcraft</Config>
+  <Config Name="EXTRA_REPOS" Target="EXTRA_REPOS" Default="" Mode="" Description="Comma-separated extra repos to include regardless of pattern" Type="Variable" Display="advanced" Required="false" Mask="false"/>
+</Container>

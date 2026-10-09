@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CraftHub</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236d5efc'/%3E%3Cpath d='M9 22V10l7 4 7-4v12l-7-4z' fill='%23fff'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#0b0d14;--panel:#141824;--panel2:#1b2030;--line:#262c40;--text:#e8ebf5;--mute:#8d95b0;--accent:#7c6cff;--accent2:#35d0ff;--ok:#3ddc97;--warn:#ffb454;--bad:#ff6b7a;--shadow:0 10px 30px rgba(0,0,0,.35)}
+:root[data-theme=light]{--bg:#f3f5fb;--panel:#fff;--panel2:#f0f2f9;--line:#e0e4f0;--text:#171b2b;--mute:#6a7390;--shadow:0 10px 30px rgba(30,40,90,.1)}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(1200px 500px at 70% -10%,color-mix(in srgb,var(--accent) 18%,transparent),transparent),var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh}
+.wrap{max-width:1240px;margin:0 auto;padding:0 16px 60px}
+header{display:flex;align-items:center;gap:14px;padding:22px 0 8px;flex-wrap:wrap}
+.logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;box-shadow:0 6px 18px color-mix(in srgb,var(--accent) 45%,transparent)}
+h1{font-size:22px;margin:0;letter-spacing:-.02em}.sub{color:var(--mute);font-size:13px}
+.spacer{flex:1}
+button,.btn{font:inherit;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 14px;cursor:pointer;transition:.15s;text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+button:hover,.btn:hover{border-color:var(--accent)}button:disabled{opacity:.5;cursor:not-allowed}
+.primary{background:linear-gradient(135deg,var(--accent),#5b8cff);border-color:transparent;color:#fff;font-weight:600}
+.danger:hover{border-color:var(--bad);color:var(--bad)}
+.icon{padding:8px 10px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:14px 0}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.stat b{font-size:24px;display:block;letter-spacing:-.02em}.stat span{color:var(--mute);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+.bar{display:flex;gap:10px;align-items:center;margin:18px 0 14px;flex-wrap:wrap}
+input[type=search]{flex:1;min-width:200px;background:var(--panel);border:1px solid var(--line);border-radius:10px;color:var(--text);padding:10px 14px;font:inherit}
+input[type=search]:focus{outline:none;border-color:var(--accent)}
+.chips{display:flex;gap:6px}.chip{padding:6px 12px;border-radius:99px;font-size:13px}.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow);position:relative;overflow:hidden;transition:.2s}
+.card:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent) 50%,var(--line))}
+.top{display:flex;gap:14px;align-items:center}
+.ava{width:52px;height:52px;border-radius:15px;display:grid;place-items:center;font-weight:700;font-size:22px;color:#fff;flex:none;text-transform:uppercase}
+.name{font-weight:650;font-size:17px;text-transform:capitalize}.rep{color:var(--mute);font-size:12.5px}
+.desc{color:var(--mute);font-size:13.5px;min-height:38px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.meta{display:flex;gap:6px;flex-wrap:wrap}
+.pill{font-size:12px;padding:3px 9px;border-radius:99px;border:1px solid var(--line);background:var(--panel2);color:var(--mute)}
+.pill.ok{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,transparent)}.pill.warn{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 45%,transparent)}.pill.bad{color:var(--bad)}
+.actions{display:flex;gap:8px;margin-top:auto;flex-wrap:wrap}.actions .primary{flex:1;justify-content:center}
+.prog{height:6px;border-radius:9px;background:var(--panel2);overflow:hidden}.prog i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .3s}
+.jobmsg{font-size:12.5px;color:var(--mute)}
+.menu{position:relative}.pop{position:absolute;right:0;bottom:calc(100% + 6px);background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:6px;min-width:210px;box-shadow:var(--shadow);z-index:5;display:none}
+.pop.open{display:block}.pop button{width:100%;border:0;background:none;justify-content:flex-start;border-radius:8px}.pop button:hover{background:var(--panel)}
+.pop label{display:flex;gap:8px;align-items:center;padding:8px 14px;font-size:14px;cursor:pointer}
+.pop select{width:calc(100% - 12px);margin:4px 6px;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px}
+.pop hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:18px;padding:24px;max-width:460px;width:calc(100% - 32px);box-shadow:var(--shadow)}
+dialog::backdrop{background:rgba(5,7,12,.6);backdrop-filter:blur(4px)}
+dialog h3{margin:0 0 8px}dialog p{color:var(--mute);margin:0 0 18px}.row{display:flex;gap:8px;justify-content:flex-end}
+.logline{font:12.5px ui-monospace,monospace;padding:6px 0;border-bottom:1px solid var(--line);color:var(--mute)}.logline.error{color:var(--bad)}.logline time{color:var(--text);margin-right:8px}
+#toasts{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:8px;z-index:50}
+.toast{background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--accent);padding:10px 14px;border-radius:10px;box-shadow:var(--shadow);animation:in .2s}.toast.error{border-left-color:var(--bad)}
+@keyframes in{from{opacity:0;transform:translateY(8px)}}
+.empty{grid-column:1/-1;text-align:center;color:var(--mute);padding:60px 0}
+.sw{display:flex;align-items:center;gap:8px;color:var(--mute);font-size:13px}
+@media(max-width:560px){.stats{grid-template-columns:1fr 1fr}.spacer{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="logo"><svg width="22" height="22" viewBox="0 0 32 32"><path d="M7 23V9l9 5 9-5v14l-9-5z" fill="#fff"/></svg></div>
+  <div><h1>CraftHub</h1><div class="sub" id="checked">Loading…</div></div>
+  <div class="spacer"></div>
+  <label class="sw"><input type="checkbox" id="autoall"> Auto-update all</label>
+  <button id="btnlog" class="icon" title="Activity log">📜</button>
+  <button id="btntheme" class="icon" title="Toggle theme">🌓</button>
+  <button id="btncheck">↻ Check for updates</button>
+  <button id="btnupall" class="primary" hidden>⬆ Update all</button>
+</header>
+<div class="stats" id="stats"></div>
+<div class="bar">
+  <input type="search" id="q" placeholder="Search apps…">
+  <div class="chips" id="chips"></div>
+  <button id="btninstall" title="Install every app not yet installed">＋ Install all</button>
+</div>
+<div class="grid" id="grid"></div>
+</div>
+<dialog id="dlg"><h3 id="dt"></h3><p id="dp"></p><div class="row"><button id="dno">Cancel</button><button id="dyes" class="primary"></button></div></dialog>
+<dialog id="logdlg"><h3>Activity</h3><div id="logbox" style="max-height:60vh;overflow:auto"></div><div class="row" style="margin-top:14px"><button onclick="logdlg.close()">Close</button></div></dialog>
+<div id="toasts"></div>
+<script>
+const $=s=>document.querySelector(s);let data={apps:[],settings:{}},filter='all',busy=false;
+const hue=n=>{let h=0;for(const c of n)h=(h*31+c.charCodeAt(0))%360;return h};
+const fmt=b=>b>1e9?(b/1e9).toFixed(1)+' GB':b>1e6?(b/1e6).toFixed(1)+' MB':Math.round(b/1e3)+' KB';
+const ago=t=>{if(!t)return 'never';const s=Date.now()/1000-t;return s<90?'just now':s<5400?Math.round(s/60)+' min ago':s<172800?Math.round(s/3600)+' h ago':Math.round(s/86400)+' d ago'};
+function toast(m,err){const e=document.createElement('div');e.className='toast'+(err?' error':'');e.textContent=m;$('#toasts').append(e);setTimeout(()=>e.remove(),4500)}
+async function api(path,method='GET',body){const r=await fetch('api/'+path,{method,headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined});
+  if(!r.ok){let m=r.statusText;try{m=(await r.json()).detail||m}catch{}throw new Error(m)}return r.json()}
+function confirmDlg(t,p,label,danger){return new Promise(res=>{$('#dt').textContent=t;$('#dp').textContent=p;const y=$('#dyes');y.textContent=label;y.className=danger?'danger':'primary';if(danger)y.style.cssText='background:var(--bad);color:#fff;border:0';else y.style.cssText='';
+  dlg.showModal();const done=v=>{dlg.close();res(v)};y.onclick=()=>done(true);$('#dno').onclick=()=>done(false);dlg.oncancel=()=>res(false)})}
+async function load(){try{data=await api('apps');render()}catch(e){toast(e.message,true)}}
+function render(){
+  const a=data.apps,inst=a.filter(x=>x.installed),upd=a.filter(x=>x.update_available);
+  $('#checked').textContent='Last checked '+ago(data.checked_at)+' · github.com/storytold';
+  $('#autoall').checked=!!data.settings.auto_update_all;
+  $('#btnupall').hidden=!upd.length;$('#btnupall').textContent='⬆ Update all ('+upd.length+')';
+  $('#stats').innerHTML=[['Available',a.length],['Installed',inst.length],['Updates',upd.length],['Disk used',fmt(inst.reduce((s,x)=>s+(x.installed.size||0),0))]].map(([l,v])=>`<div class="stat"><b>${v}</b><span>${l}</span></div>`).join('');
+  $('#chips').innerHTML=[['all','All'],['installed','Installed'],['updates','Updates'],['avail','Not installed']].map(([k,l])=>`<button class="chip ${filter===k?'on':''}" data-f="${k}">${l}</button>`).join('');
+  const q=$('#q').value.toLowerCase();
+  const list=a.filter(x=>(filter==='all'||(filter==='installed'&&x.installed)||(filter==='updates'&&x.update_available)||(filter==='avail'&&!x.installed))&&(x.name+x.replaces+x.description).toLowerCase().includes(q));
+  $('#grid').innerHTML=list.map(card).join('')||'<div class="empty">Nothing here.</div>';
+  busy=a.some(x=>x.job&&x.job.state==='running');
+}
+function card(x){
+  const h=hue(x.name),j=x.job,i=x.installed;
+  let pills=`<span class="pill">${x.latest?'latest '+x.latest:'no web build'}</span>`;
+  if(i)pills=`<span class="pill ${x.update_available?'warn':'ok'}">${x.update_available?'● update → '+x.latest:'● '+i.version}</span>`+(x.update_available?`<span class="pill">installed ${i.version}</span>`:'')+`<span class="pill">${fmt(i.size)}</span>`+(i.verified?'<span class="pill ok" title="SHA-256 verified">✓ verified</span>':'')+(i.auto_update?'<span class="pill">auto</span>':'');
+  let act;
+  if(j&&j.state==='running')act=`<div style="width:100%"><div class="prog"><i style="width:${j.pct}%"></i></div><div class="jobmsg">${j.msg}…</div></div>`;
+  else{
+    act=(j&&j.state==='error'?`<div class="jobmsg" style="width:100%;color:var(--bad)">${j.msg}</div>`:'');
+    if(!i)act+=`<button class="primary" data-a="install" data-n="${x.name}" ${x.latest?'':'disabled'}>⬇ Install${x.latest_size?' · '+fmt(x.latest_size):''}</button>`;
+    else act+=`<a class="btn primary" href="${x.path}" target="_blank">▶ Open</a>`+(x.update_available?`<button data-a="install" data-n="${x.name}" title="Update to ${x.latest}">⬆ Update</button>`:'');
+    if(i)act+=`<div class="menu"><button class="icon" data-a="menu" data-n="${x.name}">⋯</button><div class="pop" id="m-${x.name}">
+      <label><input type="checkbox" data-a="auto" data-n="${x.name}" ${i.auto_update?'checked':''}> Auto-update</label>
+      <select data-a="ver" data-n="${x.name}"><option value="">Install specific version…</option>${x.versions.map(v=>`<option>${v}</option>`).join('')}</select>
+      ${x.has_previous?`<button data-a="rollback" data-n="${x.name}">↩ Roll back to ${i.previous||'previous'}</button>`:''}
+      <button data-a="copy" data-n="${x.name}">🔗 Copy link</button>
+      ${x.latest_url?`<button data-a="notes" data-n="${x.name}">📝 Release notes</button>`:''}
+      <button data-a="repo" data-n="${x.name}">⌥ Source repo</button><hr>
+      <button class="danger" data-a="delete" data-n="${x.name}">🗑 Delete</button></div></div>`;
+  }
+  return `<div class="card"><div class="top"><div class="ava" style="background:linear-gradient(135deg,hsl(${h} 75% 58%),hsl(${(h+50)%360} 80% 45%))">${x.name[0]}</div><div><div class="name">${x.name}</div><div class="rep">${x.replaces?'Alternative to '+x.replaces:'WebAssembly app'}</div></div></div>
+  <div class="desc">${(x.description||'').replace(/</g,'&lt;')}</div><div class="meta">${pills}</div><div class="actions">${act}</div></div>`}
+document.addEventListener('click',async e=>{
+  const t=e.target.closest('[data-a]');
+  if(!e.target.closest('.menu'))document.querySelectorAll('.pop.open').forEach(p=>p.classList.remove('open'));
+  if(e.target.dataset.f){filter=e.target.dataset.f;render();return}
+  if(!t)return;const n=t.dataset.n,x=data.apps.find(a=>a.name===n),a=t.dataset.a;
+  try{
+    if(a==='menu'){const p=$('#m-'+n),o=p.classList.contains('open');document.querySelectorAll('.pop.open').forEach(p=>p.classList.remove('open'));if(!o)p.classList.add('open')}
+    else if(a==='install'){await api(`apps/${n}/install`,'POST',{});poll()}
+    else if(a==='rollback'){if(await confirmDlg('Roll back '+n+'?','Swaps back to the previously installed version.','Roll back')){await api(`apps/${n}/rollback`,'POST');toast(n+' rolled back');load()}}
+    else if(a==='delete'){if(await confirmDlg('Delete '+n+'?','Removes the hosted files and any saved previous version. Your documents live in your browser and are not affected. You can reinstall any time.','Delete',true)){await api('apps/'+n,'DELETE');toast(n+' deleted');load()}}
+    else if(a==='copy'){await navigator.clipboard.writeText(new URL(x.path,location.href).href);toast('Link copied')}
+    else if(a==='notes')window.open(x.latest_url);else if(a==='repo')window.open(x.repo);
+  }catch(err){toast(err.message,true)}
+});
+document.addEventListener('change',async e=>{const t=e.target,n=t.dataset.n;if(!t.dataset.a)return;try{
+  if(t.dataset.a==='auto'){await api(`apps/${n}/settings`,'POST',{auto_update:t.checked});toast('Auto-update '+(t.checked?'on':'off')+' for '+n);load()}
+  if(t.dataset.a==='ver'&&t.value){const v=t.value;if(await confirmDlg('Install '+n+' '+v+'?','Replaces the current version (the old one is kept for rollback).','Install')){await api(`apps/${n}/install`,'POST',{version:v});poll()}else t.value=''}
+}catch(err){toast(err.message,true)}});
+$('#q').oninput=render;
+$('#autoall').onchange=async e=>{await api('settings','POST',{auto_update_all:e.target.checked});toast('Auto-update all '+(e.target.checked?'on':'off'))};
+$('#btncheck').onclick=async()=>{const b=$('#btncheck');b.disabled=true;b.textContent='Checking…';try{data=await api('refresh','POST');render();const u=data.apps.filter(a=>a.update_available).length;toast(u?u+' update(s) available':'Everything is up to date')}catch(e){toast(e.message,true)}b.disabled=false;b.textContent='↻ Check for updates'};
+$('#btnupall').onclick=async()=>{const r=await api('upgrade-all','POST');toast('Updating '+r.started+' app(s)');poll()};
+$('#btninstall').onclick=async()=>{const todo=data.apps.filter(a=>!a.installed&&a.latest);if(!todo.length)return toast('Everything is installed');
+  if(await confirmDlg('Install all?',`Downloads ${todo.length} apps (about ${fmt(todo.reduce((s,a)=>s+(a.latest_size||0),0))}).`,'Install all')){for(const a of todo)await api(`apps/${a.name}/install`,'POST',{}).catch(()=>0);poll()}};
+$('#btnlog').onclick=async()=>{const l=await api('log');$('#logbox').innerHTML=l.map(e=>`<div class="logline ${e.level}"><time>${new Date(e.t*1000).toLocaleString()}</time>${e.msg.replace(/</g,'&lt;')}</div>`).join('')||'<div class="logline">No activity yet.</div>';logdlg.showModal()};
+$('#btntheme').onclick=()=>{const d=document.documentElement;const v=d.dataset.theme==='light'?'dark':'light';d.dataset.theme=v;try{localStorage.theme=v}catch{}};
+try{if(localStorage.theme)document.documentElement.dataset.theme=localStorage.theme;else if(matchMedia('(prefers-color-scheme: light)').matches)document.documentElement.dataset.theme='light'}catch{}
+let timer;function poll(){clearTimeout(timer);load().then(()=>{timer=setTimeout(poll,busy?800:30000)})}
+poll();
+</script>
+</body>
+</html>
