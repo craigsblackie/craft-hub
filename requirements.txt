@@ -9,7 +9,7 @@ httpcore==1.0.9
 httptools==0.8.0
 httpx==0.28.1
 idna==3.20
-pydantic==2.14.0
+pydantic==2.14.1
 pydantic_core==2.50.0
 python-dotenv==1.2.4
 PyYAML==6.0.3
